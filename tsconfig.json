@@ -1,0 +1,28 @@
+{
+    "compilerOptions": {
+        "module": "Commonjs",
+        "target": "ESNext",
+        "noImplicitAny": false,
+        "sourceMap": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "rootDir": "src",
+        "baseUrl": ".",
+        "outDir": "esm",
+        "typeRoots": [
+            "types"
+        ],
+        "types": [
+            "node"
+        ],
+    },
+    "include": [
+        "src"
+    ],
+    "exclude": [
+        "node_modules",
+        "backup",
+        "src/test.ts",
+        "src/index.ts"
+    ]
+}
