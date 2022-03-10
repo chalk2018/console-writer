@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ConsoleBuilder = exports.Level = void 0;
+exports.auto = exports.ConsoleBuilder = exports.Level = void 0;
 const log4js = require("log4js");
 const path = require("path");
 // console有效属性
@@ -29,7 +29,7 @@ const consoleProperty = {
     timeEnd: false,
     timeLog: false,
     timeStamp: false,
-    trace: false
+    trace: false,
 };
 const { configure, getLogger } = log4js;
 // log4js - Levels weight value
@@ -53,8 +53,8 @@ var Level;
 })(Level = exports.Level || (exports.Level = {}));
 const defaultOption = {
     backup: true,
-    fileName: 'console.log',
-    logDir: 'logs',
+    fileName: "console.log",
+    logDir: "logs",
     backupSize: 10485760,
     backupCount: 3,
     backupZip: true,
@@ -85,9 +85,9 @@ class ConsoleBuilder extends Map {
         // 获取项目运行根目录
         const basePath = path.resolve();
         // 记录根目录
-        this.set('basePath', basePath);
+        this.set("basePath", basePath);
         // 记录option
-        this.set('option', option);
+        this.set("option", option);
         if (option?.useConfig ?? defaultOption.useConfig) {
             this.configResolver(option?.configFileName || defaultOption.configFileName);
         }
@@ -97,13 +97,13 @@ class ConsoleBuilder extends Map {
         }
     }
     get base() {
-        return this.get('basePath');
+        return this.get("basePath");
     }
     get option() {
-        return this.get('option');
+        return this.get("option");
     }
     get logger() {
-        return this.get('logger');
+        return this.get("logger");
     }
     get console() {
         return globalThis.__console;
@@ -113,22 +113,22 @@ class ConsoleBuilder extends Map {
     }
     // hooks
     onLog(callback) {
-        this.set('on_log', callback);
+        this.set("on_log", callback);
     }
     onInfo(callback) {
-        this.set('on_info', callback);
+        this.set("on_info", callback);
     }
     onError(callback) {
-        this.set('on_error', callback);
+        this.set("on_error", callback);
     }
     onWarn(callback) {
-        this.set('on_warn', callback);
+        this.set("on_warn", callback);
     }
     onDebug(callback) {
-        this.set('on_debug', callback);
+        this.set("on_debug", callback);
     }
     hookingStart(logType) {
-        const hook = this.get('on_' + logType);
+        const hook = this.get("on_" + logType);
         if (hook) {
             return hook(this.console, this.logger);
         }
@@ -137,20 +137,22 @@ class ConsoleBuilder extends Map {
         }
     }
     hookingEnd(logType, hooksMap) {
-        const hook = this.get('on_' + logType);
+        const hook = this.get("on_" + logType);
         if (hook) {
-            if (Object.prototype.toString.call(hooksMap[logType]) === '[object Function]' ||
-                Object.prototype.toString.call(hooksMap[logType]) === '[object AsyncFunction]') {
+            if (Object.prototype.toString.call(hooksMap[logType]) ===
+                "[object Function]" ||
+                Object.prototype.toString.call(hooksMap[logType]) ===
+                    "[object AsyncFunction]") {
                 hooksMap[logType](this.console, this.logger);
             }
         }
     }
     configResolver(fileName) {
         try {
-            const conf = require(path.join(this.base, fileName ?? 'cw.config.js'));
+            const conf = require(path.join(this.base, fileName ?? "cw.config.js"));
             // console.log(conf);
             const _option = { ...this.option, ...conf.option };
-            this.set('option', _option);
+            this.set("option", _option);
         }
         catch (err) {
             //
@@ -161,35 +163,43 @@ class ConsoleBuilder extends Map {
         // 配置log4js
         if (option?.configLog4js) {
             option.configLog4js(log4js, (logger) => {
-                this.set('logger', logger);
+                this.set("logger", logger);
             }, this.rewriteConsole.bind(this));
         }
         else {
             if (option?.backup) {
                 // 解析扩展名，默认.log
-                const defaultExt = '.log';
+                const defaultExt = ".log";
                 let extension = defaultExt;
                 const fileName = option.fileName || defaultOption.fileName;
-                const nameAndExt = fileName.split('.');
+                const nameAndExt = fileName.split(".");
                 if (nameAndExt.length > 1) {
                     // extension = '.' + nameAndExt.slice(-1);
-                    extension = '.' + nameAndExt.pop();
+                    extension = "." + nameAndExt.pop();
                 }
-                let categoryName = nameAndExt.join('.');
+                let categoryName = nameAndExt.join(".");
                 configure({
                     appenders: {
                         loggerStore: {
-                            type: 'multiFile', base: (option?.logDir ?? defaultOption.logDir) + '/', property: 'categoryName', extension,
-                            maxLogSize: option?.backupSize ?? defaultOption.backupSize, backups: option?.backupCount ?? defaultOption.backupCount, compress: option?.backupZip ?? defaultOption.backupZip
-                        }
+                            type: "multiFile",
+                            base: (option?.logDir ?? defaultOption.logDir) + "/",
+                            property: "categoryName",
+                            extension,
+                            maxLogSize: option?.backupSize ?? defaultOption.backupSize,
+                            backups: option?.backupCount ?? defaultOption.backupCount,
+                            compress: option?.backupZip ?? defaultOption.backupZip,
+                        },
                     },
                     categories: {
-                        default: { appenders: ['loggerStore'], level: option?.level || defaultOption.level }
-                    }
+                        default: {
+                            appenders: ["loggerStore"],
+                            level: option?.level || defaultOption.level,
+                        },
+                    },
                 });
                 // 记录logger
                 const logger = getLogger(categoryName);
-                this.set('logger', logger);
+                this.set("logger", logger);
                 // 重写
                 if (option?.autoRewrite ?? defaultOption.autoRewrite) {
                     this.rewriteConsole();
@@ -197,12 +207,22 @@ class ConsoleBuilder extends Map {
             }
             else {
                 configure({
-                    appenders: { loggerStore: { type: "file", filename: path.join(option?.logDir || defaultOption.logDir, option?.fileName || defaultOption.fileName) } },
-                    categories: { default: { appenders: ["loggerStore"], level: option?.level || defaultOption.level } }
+                    appenders: {
+                        loggerStore: {
+                            type: "file",
+                            filename: path.join(option?.logDir || defaultOption.logDir, option?.fileName || defaultOption.fileName),
+                        },
+                    },
+                    categories: {
+                        default: {
+                            appenders: ["loggerStore"],
+                            level: option?.level || defaultOption.level,
+                        },
+                    },
                 });
                 // 记录logger
                 const logger = getLogger();
-                this.set('logger', logger);
+                this.set("logger", logger);
                 // 重写
                 if (option?.autoRewrite ?? defaultOption.autoRewrite) {
                     this.rewriteConsole();
@@ -213,22 +233,22 @@ class ConsoleBuilder extends Map {
     }
     output(logType, msgs) {
         const _this = this;
-        if (logType === 'log' || logType === 'info') {
+        if (logType === "log" || logType === "info") {
             _this.logger.info(...msgs);
         }
-        else if (logType === 'error' || logType === 'exception') {
+        else if (logType === "error" || logType === "exception") {
             _this.logger.error(...msgs);
         }
-        else if (logType === 'warn') {
+        else if (logType === "warn") {
             _this.logger.warn(...msgs);
         }
-        else if (logType === 'debug') {
+        else if (logType === "debug") {
             _this.logger.debug(...msgs);
         }
     }
     logWriter(logType, context) {
         const _this = this;
-        const target = context ? context : (this ?? null);
+        const target = context ? context : this ?? null;
         function logWrite(...args) {
             if (args.length === 0) {
                 return undefined;
@@ -237,7 +257,8 @@ class ConsoleBuilder extends Map {
             // 格式： msgs : Array<Object>
             // 格式： msg : Format<string> , arg1 , arg2 , arg3
             const arg1 = args[0];
-            if (typeof arg1 === 'string' && ['%o', '%O', '%d', '%i', '%s', '%f'].some((fmt) => arg1.indexOf(fmt) >= 0)) {
+            if (typeof arg1 === "string" &&
+                ["%o", "%O", "%d", "%i", "%s", "%f"].some((fmt) => arg1.indexOf(fmt) >= 0)) {
                 // 模板输出格式
                 let i = 1;
                 arg1.replaceAll(/(%o)|(%O)|(%d)|(%i)|(%s)|(%f)/g, (v, l) => {
@@ -249,25 +270,25 @@ class ConsoleBuilder extends Map {
             else {
                 // 直接输出格式
                 const argStrs = args.map((arg) => {
-                    if (Object.prototype.toString.call(arg) === '[object Number]') {
+                    if (Object.prototype.toString.call(arg) === "[object Number]") {
                         return String(arg);
                     }
-                    else if (Object.prototype.toString.call(arg) === '[object Boolean]') {
+                    else if (Object.prototype.toString.call(arg) === "[object Boolean]") {
                         return String(arg);
                     }
-                    else if (Object.prototype.toString.call(arg) === '[object String]') {
+                    else if (Object.prototype.toString.call(arg) === "[object String]") {
                         return arg;
                     }
-                    else if (Object.prototype.toString.call(arg) === '[object Undefined]') {
+                    else if (Object.prototype.toString.call(arg) === "[object Undefined]") {
                         return String(arg);
                     }
-                    else if (Object.prototype.toString.call(arg) === '[object Null]') {
+                    else if (Object.prototype.toString.call(arg) === "[object Null]") {
                         return String(arg);
                     }
-                    else if (Object.prototype.toString.call(arg) === '[object Object]') {
+                    else if (Object.prototype.toString.call(arg) === "[object Object]") {
                         return JSON.stringify(arg);
                     }
-                    else if (Object.prototype.toString.call(arg) === '[object Array]') {
+                    else if (Object.prototype.toString.call(arg) === "[object Array]") {
                         return JSON.stringify(arg);
                     }
                     else {
@@ -316,10 +337,36 @@ class ConsoleBuilder extends Map {
                 else {
                     return Reflect.get(target, propertyKey, receiver);
                 }
-            }
+            },
         });
         return _this;
     }
 }
 exports.ConsoleBuilder = ConsoleBuilder;
+// 自动配置
+const auto = () => {
+    const console = new ConsoleBuilder({
+        useConfig: true,
+        autoInitOption: false,
+        autoRewrite: false, // false就是需要调用rewriteConsole
+    });
+    // console.opiton可以获取option信息
+    console.initOption().rewriteConsole();
+    // 钩子方法使用
+    // using hooks (onLog, onInfo, onError, onWarn, onDebug)
+    // console.onLog((console)=>{
+    //     console.log('before log write');
+    //     return (console) => {
+    //         console.log('after log console print');
+    //     }
+    // })
+    // console.onError((console)=>{
+    //     console.log('before error write');
+    //     return (console) => {
+    //         console.log('after error console print');
+    //     }
+    // })
+    return console;
+};
+exports.auto = auto;
 //# sourceMappingURL=console.js.map
