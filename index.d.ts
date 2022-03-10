@@ -41,4 +41,4 @@ export class ConsoleBuilder {
   initOption(option?: Option): this;
   rewriteConsole(): this;
 }
-export type auto = () => any;
+export declare const auto: () => any;
