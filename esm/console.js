@@ -160,6 +160,9 @@ class ConsoleBuilder extends Map {
         }
     }
     initOption(option) {
+        if (option === undefined) {
+            option = this.option;
+        }
         // 配置log4js
         if (option?.configLog4js) {
             option.configLog4js(log4js, (logger) => {
