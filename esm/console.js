@@ -289,10 +289,22 @@ class ConsoleBuilder extends Map {
                         return String(arg);
                     }
                     else if (Object.prototype.toString.call(arg) === "[object Object]") {
-                        return JSON.stringify(arg);
+                        try {
+                            const jsonStr = JSON.stringify(arg);
+                            return jsonStr;
+                        }
+                        catch (e) {
+                            return "";
+                        }
                     }
                     else if (Object.prototype.toString.call(arg) === "[object Array]") {
-                        return JSON.stringify(arg);
+                        try {
+                            const jsonStr = JSON.stringify(arg);
+                            return jsonStr;
+                        }
+                        catch (e) {
+                            return "";
+                        }
                     }
                     else {
                         return String(arg);
