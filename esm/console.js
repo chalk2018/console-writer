@@ -63,6 +63,7 @@ const defaultOption = {
     autoRewrite: false,
     useConfig: false,
     autoInitOption: true,
+    configFileName: "cw.config.js"
 };
 /**
  * 例子：
@@ -149,7 +150,7 @@ class ConsoleBuilder extends Map {
     }
     configResolver(fileName) {
         try {
-            const conf = require(path.join(this.base, fileName ?? "cw.config.js"));
+            const conf = require(path.join(this.base, fileName ?? defaultOption.configFileName));
             // console.log(conf);
             const _option = { ...this.option, ...conf.option };
             this.set("option", _option);
@@ -160,6 +161,9 @@ class ConsoleBuilder extends Map {
         }
     }
     initOption(option) {
+        // 还原console
+        globalThis.console = this.console;
+        //
         if (option === undefined) {
             option = this.option;
         }
