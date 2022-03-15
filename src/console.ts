@@ -120,16 +120,16 @@ export class ConsoleBuilder extends Map {
         option?.configFileName || defaultOption.configFileName
       );
     }
-    this.console.log(this.option)
+    // this.console.log(this.option)
     // 初始化
     if (option?.autoInitOption ?? this.option?.autoInitOption ?? defaultOption.autoInitOption) {
       this.initOption(this.option);
-      this.console.log('initOption')
+      // this.console.log('initOption')
     }
     // 重写
     if (option?.autoRewrite ?? this.option?.autoRewrite ?? defaultOption.autoRewrite) {
       this.rewriteConsole();
-      this.console.log('rewriteConsole')
+      // this.console.log('rewriteConsole')
     }
   }
 
@@ -237,8 +237,8 @@ export class ConsoleBuilder extends Map {
       const _option = { ...this.option, ...conf.option };
       this.set("option", _option);
     } catch (err) {
-      //
-      console.log(err);
+      // 读取文件异常
+      this.console.error(err);
     }
   }
 
