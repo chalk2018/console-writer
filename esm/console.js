@@ -1,7 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.auto = exports.ConsoleBuilder = exports.Level = void 0;
-const log4js = require("log4js");
 const path = require("path");
 // console有效属性
 const consoleProperty = {
@@ -31,7 +30,7 @@ const consoleProperty = {
     timeStamp: false,
     trace: false,
 };
-const { configure, getLogger } = log4js;
+// const { configure, getLogger } = log4js;
 // log4js - Levels weight value
 // ALL: { value: Number.MIN_VALUE, colour: 'grey' },
 // TRACE: { value: 5000, colour: 'blue' },
@@ -62,8 +61,8 @@ const defaultOption = {
     disabledConsole: false,
     autoRewrite: false,
     useConfig: false,
-    autoInitOption: true,
-    configFileName: "cw.config.js"
+    autoInitOption: false,
+    configFileName: "cw.config.js",
 };
 /**
  * 例子：
@@ -83,6 +82,8 @@ class ConsoleBuilder extends Map {
         super();
         // 备份原始console
         globalThis.__console = globalThis.console;
+        // 获取log4js
+        this.set("log4js", require("log4js"));
         // 获取项目运行根目录
         const basePath = path.resolve();
         // 记录根目录
@@ -92,9 +93,16 @@ class ConsoleBuilder extends Map {
         if (option?.useConfig ?? defaultOption.useConfig) {
             this.configResolver(option?.configFileName || defaultOption.configFileName);
         }
+        this.console.log(this.option);
         // 初始化
-        if (option?.autoInitOption ?? defaultOption.autoInitOption) {
+        if (option?.autoInitOption ?? this.option?.autoInitOption ?? defaultOption.autoInitOption) {
             this.initOption(this.option);
+            this.console.log('initOption');
+        }
+        // 重写
+        if (option?.autoRewrite ?? this.option?.autoRewrite ?? defaultOption.autoRewrite) {
+            this.rewriteConsole();
+            this.console.log('rewriteConsole');
         }
     }
     get base() {
@@ -110,7 +118,23 @@ class ConsoleBuilder extends Map {
         return globalThis.__console;
     }
     get log4js() {
-        return log4js;
+        return this.get("log4js");
+    }
+    // 反射重写后的console的log/info/warn/error/debug
+    get log() {
+        return console.log;
+    }
+    get info() {
+        return console.info;
+    }
+    get warn() {
+        return console.warn;
+    }
+    get error() {
+        return console.error;
+    }
+    get debug() {
+        return console.debug;
     }
     // hooks
     onLog(callback) {
@@ -160,16 +184,36 @@ class ConsoleBuilder extends Map {
             console.log(err);
         }
     }
+    shutdown() {
+        return new Promise((resolve, _) => {
+            this.log4js.shutdown(() => {
+                resolve(this.log4js);
+            });
+        });
+    }
+    async closeLog4js() {
+        try {
+            await this.shutdown();
+            return this.log4js;
+        }
+        catch (err) {
+            throw err;
+        }
+    }
     initOption(option) {
+        const { configure, getLogger } = this.log4js;
         // 还原console
         globalThis.console = this.console;
         //
         if (option === undefined) {
             option = this.option;
         }
+        else {
+            this.set("option", option);
+        }
         // 配置log4js
         if (option?.configLog4js) {
-            option.configLog4js(log4js, (logger) => {
+            option.configLog4js(this.log4js, (logger) => {
                 this.set("logger", logger);
             }, this.rewriteConsole.bind(this));
         }
@@ -207,10 +251,10 @@ class ConsoleBuilder extends Map {
                 // 记录logger
                 const logger = getLogger(categoryName);
                 this.set("logger", logger);
-                // 重写
-                if (option?.autoRewrite ?? defaultOption.autoRewrite) {
-                    this.rewriteConsole();
-                }
+                // // 重写
+                // if (option?.autoRewrite ?? defaultOption.autoRewrite) {
+                //   this.rewriteConsole();
+                // }
             }
             else {
                 configure({
@@ -230,10 +274,10 @@ class ConsoleBuilder extends Map {
                 // 记录logger
                 const logger = getLogger();
                 this.set("logger", logger);
-                // 重写
-                if (option?.autoRewrite ?? defaultOption.autoRewrite) {
-                    this.rewriteConsole();
-                }
+                // // 重写
+                // if (option?.autoRewrite ?? defaultOption.autoRewrite) {
+                //   this.rewriteConsole();
+                // }
             }
         }
         return this;
@@ -321,43 +365,56 @@ class ConsoleBuilder extends Map {
     }
     rewriteConsole() {
         const _this = this;
-        // 代理重写
-        globalThis.console = new Proxy(this.console, {
-            get(target, propertyKey, receiver) {
-                // if (propertyKey === 'log') {
-                // } else if (propertyKey === 'info') {
-                // } else if (propertyKey === 'error') {
-                // } else if (propertyKey === 'exception') {
-                // } else if (propertyKey === 'warn') {
-                // } else if (propertyKey === 'debug') {
-                // } else {
-                //     return Reflect.get(target, propertyKey, receiver);
-                // }
-                if (consoleProperty[propertyKey]) {
-                    const fn = (...args) => {
-                        // 触发钩子
-                        const resultHook = _this.hookingStart(propertyKey);
-                        // 写入log
-                        _this.logWriter(propertyKey, target)(...args);
-                        // 调用原方法
-                        let consoleRes = undefined;
-                        if (_this.option?.disabledConsole) {
-                            consoleRes = undefined;
-                        }
-                        else {
-                            consoleRes = target[propertyKey].call(target, ...args);
-                        }
-                        // 结束hook触发
-                        _this.hookingEnd(propertyKey, { [propertyKey]: resultHook });
-                        return consoleRes;
-                    };
-                    return fn;
-                }
-                else {
-                    return Reflect.get(target, propertyKey, receiver);
-                }
-            },
-        });
+        // 非自动重写时，重置option
+        if (this.option?.autoRewrite ?? defaultOption.autoRewrite) {
+            // do nothing
+        }
+        else {
+            this.initOption();
+        }
+        if (this.get("console")) {
+            globalThis.console = this.get("console");
+        }
+        else {
+            // 代理重写
+            globalThis.console = new Proxy(this.console, {
+                get(target, propertyKey, receiver) {
+                    // if (propertyKey === 'log') {
+                    // } else if (propertyKey === 'info') {
+                    // } else if (propertyKey === 'error') {
+                    // } else if (propertyKey === 'exception') {
+                    // } else if (propertyKey === 'warn') {
+                    // } else if (propertyKey === 'debug') {
+                    // } else {
+                    //     return Reflect.get(target, propertyKey, receiver);
+                    // }
+                    if (consoleProperty[propertyKey]) {
+                        const fn = (...args) => {
+                            // 触发钩子
+                            const resultHook = _this.hookingStart(propertyKey);
+                            // 写入log
+                            _this.logWriter(propertyKey, target)(...args);
+                            // 调用原方法
+                            let consoleRes = undefined;
+                            if (_this.option?.disabledConsole) {
+                                consoleRes = undefined;
+                            }
+                            else {
+                                consoleRes = target[propertyKey].call(target, ...args);
+                            }
+                            // 结束hook触发
+                            _this.hookingEnd(propertyKey, { [propertyKey]: resultHook });
+                            return consoleRes;
+                        };
+                        return fn;
+                    }
+                    else {
+                        return Reflect.get(target, propertyKey, receiver);
+                    }
+                },
+            });
+            this.set("console", globalThis.console);
+        }
         return _this;
     }
 }

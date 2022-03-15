@@ -36,6 +36,8 @@ module.exports = {
         backupSize: 100 * 1024 * 1024, // Maximum size of the backup file, if backup = true
         backupZip: false, // Packing backup files, if backup = true
         backupCount: 20, // Maximum number of backup files
+        autoRewrite: true, // if false : You can actively call rewriteConsole to intercept the console
+        autoInitOption: true
     }
 }
 ```
@@ -48,7 +50,7 @@ module.exports = {
 **index.js**
 ```javascript
 import {ConsoleBuilder,Level} from 'console-writer';
-const console = new ConsoleBuilder({
+const instance = new ConsoleBuilder({
     logDir: 'console/logs',
     fileName: 'run.log',
     disabledConsole: false,
@@ -61,7 +63,7 @@ const console = new ConsoleBuilder({
     autoInitOption: true
 });
 console.log('before write!');
-console.rewriteConsole(); // Actively call rewriteConsole
+instance.rewriteConsole(); // Actively call rewriteConsole
 console.log('after write!');
 ```
 > You can build multiple instances of ConsoleBuilder with different config throw "autoRewrite = false"
@@ -72,11 +74,11 @@ console.log('after write!');
 **index.js**
 ```typescript
 import {ConsoleBuilder,Level} from 'console-writer';
-const console = new ConsoleBuilder({
+const instance = new ConsoleBuilder({
     autoRewrite: false,
     autoInitOption: false // // if false : You can reset option
 });
-console.initOption({
+instance.initOption({
     logDir: 'console/logs',
     fileName: 'run1.log',
     disabledConsole: false,
@@ -86,7 +88,7 @@ console.initOption({
     backupZip: false,
     backupCount: 20,
 })
-console.rewriteConsole();
+instance.rewriteConsole();
 console.log('first write!'); // This record is written to the run1.log file
 // reset option
 console.initOption({
@@ -99,7 +101,7 @@ console.initOption({
     backupZip: false,
     backupCount: 20,
 })
-console.rewriteConsole();
+instance.rewriteConsole();
 console.log('second write!'); // This record is written to the run2.log file
 ```
 
@@ -110,7 +112,7 @@ console.log('second write!'); // This record is written to the run2.log file
 **index.js**
 ```javascript
 import {ConsoleBuilder} from 'console-writer';
-const console = new ConsoleBuilder({
+new ConsoleBuilder({
   useConfig: true,
   configFileName: "cw_conf.js" // The default file name is cw.config.js
 });
@@ -121,37 +123,37 @@ console.log('log write!');
 > If you got a instance of ConsoleBuilder, You can trigger the callback method when the log is output
 ```javascript
 import {ConsoleBuilder} from 'console-writer';
-const console = new ConsoleBuilder({useConfig: true});
+const {onLog,onInfo,onWarn,onError,onDebug} = new ConsoleBuilder({useConfig: true});
 // when console.log()
-console.onLog((console)=>{
+onLog((console)=>{
     console.log('before log write'); // This sentence will don't write in the log file
     return (console) => {
         console.log('after log console print'); // This sentence will don't write in the log file
     }
 })
 // when console.info()
-console.onInfo(console=>{
+onInfo(console=>{
     // ...
     return (console) => {
         // ...
     }
 })
 // when console.warn()
-console.onWarn(console=>{
+onWarn(console=>{
     // ...
     return (console) => {
         // ...
     }
 })
 // when console.error()
-console.onError(console=>{
+onError(console=>{
     // ...
     return (console) => {
         // ...
     }
 })
 // when console.debug()
-console.onDebug(console=>{
+onDebug(console=>{
     // ...
     return (console) => {
         // ...
