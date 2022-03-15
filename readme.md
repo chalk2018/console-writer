@@ -13,10 +13,17 @@ npm install console-writer
 ### Auto write file throw console
 > this is the entry file.
 
+1. usage1
 **index.js**
 ```javascript
 import {auto} from 'console-writer';
 auto();
+console.log('first write!');
+```
+2. usage2
+**index.js**
+```javascript
+import 'console-writer/auto';
 console.log('first write!');
 ```
 > The logs/console.log file will be generated under the project
