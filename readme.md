@@ -173,10 +173,13 @@ onDebug(console=>{
 
 ### 其他使用调用方式以及说明
 1. 实例化分类
-**可以通过实例化构建多个实例，实现一个工程下的多个项目的log分类**
+ - **可以通过实例化构建多个实例，实现一个工程下的多个项目的log分类**
+
 2. 继承调用
-**通过继承来封装框架**
+ - **通过继承来封装框架**
+
 3. 原console的备份和还原
-**原始console被备份到globalThis.__console中**
+ - **原始console被备份到globalThis.__console中**
+
 4. 自由配置log4js
-**可以通过配置项目中的configLog4js参数手动配置log4js，一旦手动配置log4js一些配置将失效**
+ - **可以通过配置项目中的configLog4js参数手动配置log4js，一旦手动配置log4js一些配置将失效**
